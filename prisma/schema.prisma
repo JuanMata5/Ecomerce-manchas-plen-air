@@ -1,11 +1,12 @@
 // prisma/schema.prisma
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ==================== ENUMS ====================
@@ -85,28 +86,28 @@ model Brand {
 }
 
 model Product {
-  id           String   @id @default(cuid())
-  name         String
-  slug         String   @unique
-  description  String?
-  price        Decimal  @db.Decimal(10, 2)
-  comparePrice Decimal? @db.Decimal(10, 2)
-  stock        Int      @default(0)
-  images       String[]
-  specs        Json?
-  isNew        Boolean  @default(false)
-  isFeatured   Boolean  @default(false)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String   @id @default(cuid())
+  name        String
+  slug        String
+  description String
+  price       Float
+  comparePrice Float?
+  stock       Int
+  images      String[]
+  specs       Json
+  isNew       Boolean
+  isFeatured  Boolean
 
-  categoryId String
-  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId  String?       // opcional
+  category    Category?     @relation(fields: [categoryId], references: [id])
 
-  brandId String
-  brand   Brand @relation(fields: [brandId], references: [id])
+  brandId     String?       // opcional
+  brand       Brand?        @relation(fields: [brandId], references: [id])
 
-  orderItems OrderItem[]
+  orderItems  OrderItem[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([categoryId])
   @@index([brandId])
@@ -137,17 +138,17 @@ model Address {
 }
 
 model Order {
-  id              String      @id @default(cuid())
-  orderNumber     String      @unique
-  status          OrderStatus @default(PENDING)
-  subtotal        Decimal     @db.Decimal(10, 2)
-  shipping        Decimal     @db.Decimal(10, 2)
-  total           Decimal     @db.Decimal(10, 2)
-  paymentMethod   String
-  stripeSessionId String?
-  notes           String?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique
+  status        OrderStatus @default(PENDING)
+  subtotal      Decimal     @db.Decimal(10, 2)
+  shipping      Decimal     @db.Decimal(10, 2)
+  total         Decimal     @db.Decimal(10, 2)
+  paymentMethod String
+  paymentId     String?
+  notes         String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   userId String
   user   User   @relation(fields: [userId], references: [id])

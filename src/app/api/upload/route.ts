@@ -35,6 +35,11 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
+    // DEBUG variables de entorno
+    console.log("CLOUDINARY_CLOUD_NAME:", process.env.CLOUDINARY_CLOUD_NAME)
+    console.log("CLOUDINARY_API_KEY:", process.env.CLOUDINARY_API_KEY)
+    console.log("CLOUDINARY_API_SECRET:", process.env.CLOUDINARY_API_SECRET)
+
     // Subir a Cloudinary
     const result = await new Promise<{ secure_url: string; public_id: string }>(
       (resolve, reject) => {

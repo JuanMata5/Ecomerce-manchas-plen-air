@@ -1,43 +1,81 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { ChevronLeft, Check } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { ShippingForm } from "@/components/checkout/ShippingForm"
-import { PaymentForm } from "@/components/checkout/PaymentForm"
-import { OrderSummary } from "@/components/checkout/OrderSummary"
-import { products } from "@/data/mock-products"
-import { CartItem } from "@/types"
+import { useState } from "react";
+import Link from "next/link";
+import { ChevronLeft, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { ShippingForm } from "@/components/checkout/ShippingForm";
+import { PaymentForm } from "@/components/checkout/PaymentForm";
+import { OrderSummary } from "@/components/checkout/OrderSummary";
+import { products } from "@/data/mock-products";
+import { CartItem } from "@/types";
 
 // Mock cart data
 const cartItems: CartItem[] = [
   { product: products[0], quantity: 1 },
   { product: products[1], quantity: 2 },
   { product: products[2], quantity: 1 },
-]
+];
 
 const steps = [
   { id: 1, name: "Envio" },
   { id: 2, name: "Pago" },
   { id: 3, name: "Confirmar" },
-]
+];
 
 export default function CheckoutPage() {
-  const [currentStep, setCurrentStep] = useState(1)
+  const [currentStep, setCurrentStep] = useState(1);
+  const [shippingData, setShippingData] = useState({
+    name: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    address: "",
+    city: "",
+    state: "",
+    zip: "",
+    notes: "",
+  });
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "transfer" | "wallet">("card");
 
   const handleNext = () => {
-    if (currentStep < 3) {
-      setCurrentStep(currentStep + 1)
-    }
-  }
-
+    if (currentStep < 3) setCurrentStep(currentStep + 1);
+  };
   const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
+  };
+
+  const handleCheckout = async () => {
+    // Validaciones básicas
+    if (!shippingData.name || !shippingData.address) {
+      alert("Por favor completa los datos de envío");
+      return;
     }
-  }
+    if (!paymentMethod) {
+      alert("Por favor selecciona un método de pago");
+      return;
+    }
+
+    const res = await fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: cartItems,
+        metadata: {
+          shippingInfo: JSON.stringify(shippingData),
+          paymentMethod: paymentMethod,
+        },
+      }),
+    });
+
+    const data = await res.json();
+    if (data.initPoint) {
+      window.location.href = data.initPoint; // redirige al Checkout Pro
+    } else {
+      alert("Error al iniciar el pago");
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -67,11 +105,7 @@ export default function CheckoutPage() {
                       : "border-muted-foreground/30 text-muted-foreground"
                   }`}
                 >
-                  {currentStep > step.id ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    step.id
-                  )}
+                  {currentStep > step.id ? <Check className="h-4 w-4" /> : step.id}
                 </div>
                 <span
                   className={`ml-2 hidden text-sm font-medium sm:block ${
@@ -97,8 +131,18 @@ export default function CheckoutPage() {
         {/* Form */}
         <div className="lg:col-span-2">
           <div className="rounded-lg border bg-card p-6">
-            {currentStep === 1 && <ShippingForm />}
-            {currentStep === 2 && <PaymentForm />}
+            {currentStep === 1 && (
+              <ShippingForm
+                shippingData={shippingData}
+                setShippingData={setShippingData}
+              />
+            )}
+            {currentStep === 2 && (
+              <PaymentForm
+                paymentMethod={paymentMethod}
+                setPaymentMethod={setPaymentMethod}
+              />
+            )}
             {currentStep === 3 && (
               <div className="space-y-4">
                 <h2 className="text-lg font-semibold">Confirmar Pedido</h2>
@@ -106,20 +150,29 @@ export default function CheckoutPage() {
                   Por favor revisa los detalles de tu pedido antes de confirmar.
                 </p>
 
+                {/* Shipping info */}
                 <div className="rounded-lg bg-muted/50 p-4">
-                  <h3 className="font-medium">Direccion de Envio</h3>
+                  <h3 className="font-medium">Dirección de Envío</h3>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Juan Perez<br />
-                    Av. Principal 123<br />
-                    Lima, Lima 15001<br />
-                    Peru
+                    {shippingData.name} {shippingData.lastName}
+                    <br />
+                    {shippingData.address}
+                    <br />
+                    {shippingData.city}, {shippingData.state} {shippingData.zip}
+                    <br />
+                    {shippingData.email} - {shippingData.phone}
                   </p>
                 </div>
 
+                {/* Payment method */}
                 <div className="rounded-lg bg-muted/50 p-4">
-                  <h3 className="font-medium">Metodo de Pago</h3>
+                  <h3 className="font-medium">Método de Pago</h3>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Tarjeta terminada en •••• 3456
+                    {paymentMethod === "card"
+                      ? "Tarjeta de Crédito/Débito"
+                      : paymentMethod === "transfer"
+                      ? "Transferencia Bancaria"
+                      : "Billetera Digital"}
                   </p>
                 </div>
               </div>
@@ -129,17 +182,17 @@ export default function CheckoutPage() {
 
             {/* Navigation */}
             <div className="flex justify-between">
-              <Button
-                variant="outline"
-                onClick={handleBack}
-                disabled={currentStep === 1}
-              >
-                Atras
+              <Button variant="outline" onClick={handleBack} disabled={currentStep === 1}>
+                Atrás
               </Button>
+
               {currentStep < 3 ? (
                 <Button onClick={handleNext}>Continuar</Button>
               ) : (
-                <Button className="bg-green-600 hover:bg-green-700">
+                <Button
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={handleCheckout}
+                >
                   Confirmar y Pagar
                 </Button>
               )}
@@ -155,5 +208,5 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

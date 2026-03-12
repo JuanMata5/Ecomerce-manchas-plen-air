@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import type { Product, Category, Brand, FilterState } from "@/types"
+import { categories as mockCategories, products as mockProducts } from "../data/mock-products"  // Add products import
 
 interface ProductsState {
   products: Product[]
@@ -13,7 +14,7 @@ interface ProductsState {
   // Actions
   fetchProducts: (filters?: Partial<FilterState>) => Promise<void>
   fetchFeaturedProducts: () => Promise<void>
-  fetchCategories: () => Promise<void>
+  fetchCategories: () => void
   fetchBrands: () => Promise<void>
   setFilters: (filters: Partial<FilterState>) => void
   resetFilters: () => void
@@ -68,27 +69,14 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
   },
 
   fetchFeaturedProducts: async () => {
-    try {
-      const response = await fetch("/api/products?featured=true&limit=8")
-      if (!response.ok) throw new Error("Failed to fetch featured products")
-
-      const data = await response.json()
-      set({ featuredProducts: data.products })
-    } catch (error) {
-      console.error("Error fetching featured products:", error)
-    }
+    // Load from mock data instead of fetching
+    const featured = mockProducts.filter(p => p.featured).slice(0, 8)
+    set({ featuredProducts: featured })
   },
 
-  fetchCategories: async () => {
-    try {
-      const response = await fetch("/api/categories")
-      if (!response.ok) throw new Error("Failed to fetch categories")
-
-      const categories = await response.json()
-      set({ categories })
-    } catch (error) {
-      console.error("Error fetching categories:", error)
-    }
+  fetchCategories: () => {
+    // Replace async fetch with synchronous mock data load
+    set({ categories: mockCategories })
   },
 
   fetchBrands: async () => {

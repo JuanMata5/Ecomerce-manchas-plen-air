@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // ⬇️ AGREGA ESTO PARA ARREGLAR EL ERROR DE PRISMA ⬇️
+  serverExternalPackages: ["@prisma/client"]
 };
 
 export default nextConfig;

@@ -13,13 +13,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { ImageUpload } from "@/components/admin/ImageUpload"
 
 interface UploadedImage {
@@ -34,32 +27,16 @@ const productSchema = z.object({
   price: z.number().min(0, "El precio debe ser mayor a 0"),
   comparePrice: z.number().optional(),
   stock: z.number().min(0, "El stock debe ser mayor o igual a 0"),
-  categoryId: z.string().min(1, "La categoria es requerida"),
-  brandId: z.string().min(1, "La marca es requerida"),
   isNew: z.boolean(),
   isFeatured: z.boolean(),
 })
 
 type ProductFormData = z.infer<typeof productSchema>
 
-interface Category {
-  id: string
-  name: string
-  slug: string
-}
-
-interface Brand {
-  id: string
-  name: string
-  slug: string
-}
-
 export default function NewProductPage() {
   const router = useRouter()
-  const [categories, setCategories] = useState<Category[]>([])
-  const [brands, setBrands] = useState<Brand[]>([])
   const [saving, setSaving] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [images, setImages] = useState<UploadedImage[]>([])
 
   const {
@@ -76,29 +53,6 @@ export default function NewProductPage() {
       stock: 0,
     },
   })
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [categoriesRes, brandsRes] = await Promise.all([
-          fetch("/api/categories"),
-          fetch("/api/brands"),
-        ])
-
-        const categoriesData = await categoriesRes.json()
-        const brandsData = await brandsRes.json()
-
-        setCategories(categoriesData || [])
-        setBrands(brandsData || [])
-      } catch (error) {
-        console.error("Error fetching data:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [])
 
   const generateSlug = (name: string) => {
     return name
@@ -209,45 +163,6 @@ export default function NewProductPage() {
               {errors.description && (
                 <p className="text-sm text-destructive">{errors.description.message}</p>
               )}
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="categoryId">Categoria</Label>
-                <Select onValueChange={(value) => setValue("categoryId", value)}>
-                  <SelectTrigger id="categoryId">
-                    <SelectValue placeholder="Seleccionar categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.categoryId && (
-                  <p className="text-sm text-destructive">{errors.categoryId.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="brandId">Marca</Label>
-                <Select onValueChange={(value) => setValue("brandId", value)}>
-                  <SelectTrigger id="brandId">
-                    <SelectValue placeholder="Seleccionar marca" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {brands.map((brand) => (
-                      <SelectItem key={brand.id} value={brand.id}>
-                        {brand.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.brandId && (
-                  <p className="text-sm text-destructive">{errors.brandId.message}</p>
-                )}
-              </div>
             </div>
           </CardContent>
         </Card>
